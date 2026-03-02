@@ -1,0 +1,34 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+
+name: merge_features
+display_name: Merge All Features
+type: command
+
+inputs:
+  length_data:
+    type: uri_folder
+  sentiment_data:
+    type: uri_folder
+  tfidf_data:
+    type: uri_folder
+  embedding_data:
+    type: uri_folder
+  bonus_data:
+    type: uri_folder
+    optional: true
+
+outputs:
+  out:
+    type: uri_folder
+
+code: .
+command: >
+  python merge.py
+  --length_data ${{inputs.length_data}}
+  --sentiment_data ${{inputs.sentiment_data}}
+  --tfidf_data ${{inputs.tfidf_data}}
+  --embedding_data ${{inputs.embedding_data}}
+  $[[--bonus_data ${{inputs.bonus_data}}]]
+  --out ${{outputs.out}}
+
+environment: azureml:AzureML-sklearn-1.1-ubuntu20.04-py38-cpu@latest
