@@ -1,0 +1,79 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+
+# This tells Azure to run the pipeline on the compute cluster you built earlier
+compute: azureml:cpu-cluster
+
+# 1. Define the starting dataset
+inputs:
+  sampled_data:
+    type: uri_folder
+    path: azureml:amazon_electronics_features_v1_sampled@latest
+
+# 2. Snap the Lego blocks together
+jobs:
+  split:
+    type: command
+    component: azureml:split_dataset@latest
+    inputs:
+      data: ${{parent.inputs.sampled_data}}
+
+  normalize_train:
+    type: command
+    component: azureml:normalize_text@latest
+    inputs:
+      data: ${{parent.jobs.split.outputs.train}}
+
+  normalize_val:
+    type: command
+    component: azureml:normalize_text@latest
+    inputs:
+      data: ${{parent.jobs.split.outputs.val}}
+
+  normalize_test:
+    type: command
+    component: azureml:normalize_text@latest
+    inputs:
+      data: ${{parent.jobs.split.outputs.test}}
+
+  length_train:
+    type: command
+    component: azureml:review_length@latest
+    inputs:
+      data: ${{parent.jobs.normalize_train.outputs.out}}
+
+  sentiment_train:
+    type: command
+    component: azureml:sentiment_feature@latest
+    inputs:
+      data: ${{parent.jobs.normalize_train.outputs.out}}
+
+  tfidf:
+    type: command
+    component: azureml:tfidf_features@latest
+    inputs:
+      train_data: ${{parent.jobs.normalize_train.outputs.out}}
+      val_data: ${{parent.jobs.normalize_val.outputs.out}}
+      test_data: ${{parent.jobs.normalize_test.outputs.out}}
+
+  embedding_train:
+    type: command
+    component: azureml:semantic_embedding@latest
+    inputs:
+      data: ${{parent.jobs.normalize_train.outputs.out}}
+
+  bonus_train:
+    type: command
+    component: azureml:bonus_features@latest
+    inputs:
+      data: ${{parent.jobs.normalize_train.outputs.out}}
+
+  merge_all:
+    type: command
+    component: azureml:merge_features@latest
+    inputs:
+      length_data: ${{parent.jobs.length_train.outputs.out}}
+      sentiment_data: ${{parent.jobs.sentiment_train.outputs.out}}
+      tfidf_data: ${{parent.jobs.tfidf.outputs.train_out}}
+      embedding_data: ${{parent.jobs.embedding_train.outputs.out}}
+      bonus_data: ${{parent.jobs.bonus_train.outputs.out}}
