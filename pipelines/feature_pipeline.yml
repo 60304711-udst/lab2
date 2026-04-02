@@ -10,7 +10,18 @@ inputs:
     type: uri_folder
     path: azureml:amazon_electronics_features_v1_sampled@latest
 
-# 2. Snap the Lego blocks together
+# 2. Define the final pipeline outputs 
+outputs:
+  amazon_review_merged_features_train:
+    type: uri_folder
+  amazon_review_merged_features_val:
+    type: uri_folder
+  amazon_review_merged_features_test:
+    type: uri_folder
+  amazon_review_merged_features_deploy:
+    type: uri_folder
+
+# 3. Snap the Lego blocks together!!!!!!!!!!
 jobs:
   split:
     type: command
@@ -18,36 +29,74 @@ jobs:
     inputs:
       data: ${{parent.inputs.sampled_data}}
 
+  # --- 1. NORMALIZE TEXT ---
   normalize_train:
     type: command
     component: azureml:normalize_text@latest
     inputs:
       data: ${{parent.jobs.split.outputs.train}}
-
   normalize_val:
     type: command
     component: azureml:normalize_text@latest
     inputs:
       data: ${{parent.jobs.split.outputs.val}}
-
   normalize_test:
     type: command
     component: azureml:normalize_text@latest
     inputs:
       data: ${{parent.jobs.split.outputs.test}}
+  normalize_deploy:
+    type: command
+    component: azureml:normalize_text@latest
+    inputs:
+      data: ${{parent.jobs.split.outputs.deploy}}
 
+  # --- 2. REVIEW LENGTH ---
   length_train:
     type: command
     component: azureml:review_length@latest
     inputs:
       data: ${{parent.jobs.normalize_train.outputs.out}}
+  length_val:
+    type: command
+    component: azureml:review_length@latest
+    inputs:
+      data: ${{parent.jobs.normalize_val.outputs.out}}
+  length_test:
+    type: command
+    component: azureml:review_length@latest
+    inputs:
+      data: ${{parent.jobs.normalize_test.outputs.out}}
+  length_deploy:
+    type: command
+    component: azureml:review_length@latest
+    inputs:
+      data: ${{parent.jobs.normalize_deploy.outputs.out}}
 
+  # --- 3. SENTIMENT ---
   sentiment_train:
     type: command
     component: azureml:sentiment_feature@latest
     inputs:
       data: ${{parent.jobs.normalize_train.outputs.out}}
+  sentiment_val:
+    type: command
+    component: azureml:sentiment_feature@latest
+    inputs:
+      data: ${{parent.jobs.normalize_val.outputs.out}}
+  sentiment_test:
+    type: command
+    component: azureml:sentiment_feature@latest
+    inputs:
+      data: ${{parent.jobs.normalize_test.outputs.out}}
+  sentiment_deploy:
+    type: command
+    component: azureml:sentiment_feature@latest
+    inputs:
+      data: ${{parent.jobs.normalize_deploy.outputs.out}}
 
+  # --- 4. TF-IDF ---
+  # Note: TF-IDF vectorizer trains on train_data, and transforms the others
   tfidf:
     type: command
     component: azureml:tfidf_features@latest
@@ -55,20 +104,54 @@ jobs:
       train_data: ${{parent.jobs.normalize_train.outputs.out}}
       val_data: ${{parent.jobs.normalize_val.outputs.out}}
       test_data: ${{parent.jobs.normalize_test.outputs.out}}
+      deploy_data: ${{parent.jobs.normalize_deploy.outputs.out}}
 
+  # --- 5. EMBEDDINGS ---
   embedding_train:
     type: command
     component: azureml:semantic_embedding@latest
     inputs:
       data: ${{parent.jobs.normalize_train.outputs.out}}
+  embedding_val:
+    type: command
+    component: azureml:semantic_embedding@latest
+    inputs:
+      data: ${{parent.jobs.normalize_val.outputs.out}}
+  embedding_test:
+    type: command
+    component: azureml:semantic_embedding@latest
+    inputs:
+      data: ${{parent.jobs.normalize_test.outputs.out}}
+  embedding_deploy:
+    type: command
+    component: azureml:semantic_embedding@latest
+    inputs:
+      data: ${{parent.jobs.normalize_deploy.outputs.out}}
 
+  # --- 6. BONUS FEATURES ---
   bonus_train:
     type: command
     component: azureml:bonus_features@latest
     inputs:
       data: ${{parent.jobs.normalize_train.outputs.out}}
+  bonus_val:
+    type: command
+    component: azureml:bonus_features@latest
+    inputs:
+      data: ${{parent.jobs.normalize_val.outputs.out}}
+  bonus_test:
+    type: command
+    component: azureml:bonus_features@latest
+    inputs:
+      data: ${{parent.jobs.normalize_test.outputs.out}}
+  bonus_deploy:
+    type: command
+    component: azureml:bonus_features@latest
+    inputs:
+      data: ${{parent.jobs.normalize_deploy.outputs.out}}
 
-  merge_all:
+  # --- 7. MERGE FEATURES ---
+  merge_train:
     type: command
     component: azureml:merge_features@latest
     inputs:
@@ -77,3 +160,41 @@ jobs:
       tfidf_data: ${{parent.jobs.tfidf.outputs.train_out}}
       embedding_data: ${{parent.jobs.embedding_train.outputs.out}}
       bonus_data: ${{parent.jobs.bonus_train.outputs.out}}
+    outputs:
+      merged_data: ${{parent.outputs.amazon_review_merged_features_train}}
+
+  merge_val:
+    type: command
+    component: azureml:merge_features@latest
+    inputs:
+      length_data: ${{parent.jobs.length_val.outputs.out}}
+      sentiment_data: ${{parent.jobs.sentiment_val.outputs.out}}
+      tfidf_data: ${{parent.jobs.tfidf.outputs.val_out}}
+      embedding_data: ${{parent.jobs.embedding_val.outputs.out}}
+      bonus_data: ${{parent.jobs.bonus_val.outputs.out}}
+    outputs:
+      merged_data: ${{parent.outputs.amazon_review_merged_features_val}}
+
+  merge_test:
+    type: command
+    component: azureml:merge_features@latest
+    inputs:
+      length_data: ${{parent.jobs.length_test.outputs.out}}
+      sentiment_data: ${{parent.jobs.sentiment_test.outputs.out}}
+      tfidf_data: ${{parent.jobs.tfidf.outputs.test_out}}
+      embedding_data: ${{parent.jobs.embedding_test.outputs.out}}
+      bonus_data: ${{parent.jobs.bonus_test.outputs.out}}
+    outputs:
+      merged_data: ${{parent.outputs.amazon_review_merged_features_test}}
+
+  merge_deploy:
+    type: command
+    component: azureml:merge_features@latest
+    inputs:
+      length_data: ${{parent.jobs.length_deploy.outputs.out}}
+      sentiment_data: ${{parent.jobs.sentiment_deploy.outputs.out}}
+      tfidf_data: ${{parent.jobs.tfidf.outputs.deploy_out}}
+      embedding_data: ${{parent.jobs.embedding_deploy.outputs.out}}
+      bonus_data: ${{parent.jobs.bonus_deploy.outputs.out}}
+    outputs:
+      merged_data: ${{parent.outputs.amazon_review_merged_features_deploy}}

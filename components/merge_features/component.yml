@@ -18,7 +18,7 @@ inputs:
     optional: true
 
 outputs:
-  out:
+  merged_data:
     type: uri_folder
 
 code: .
@@ -29,6 +29,6 @@ command: >
   --tfidf_data ${{inputs.tfidf_data}}
   --embedding_data ${{inputs.embedding_data}}
   $[[--bonus_data ${{inputs.bonus_data}}]]
-  --out ${{outputs.out}}
+  --out ${{outputs.merged_data}}
 
 environment: azureml:AzureML-sklearn-1.1-ubuntu20.04-py38-cpu@latest

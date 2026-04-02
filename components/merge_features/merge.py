@@ -48,11 +48,15 @@ def main():
         except Exception as e:
             print(f"Skipping bonus data: {e}")
 
+    # --- SAFETY CHECK FOR ASSIGNMENT 2 ---
+    if 'overall' not in merged_df.columns:
+        raise ValueError("CRITICAL ERROR: The 'overall' rating column was dropped. You need this to train your model!")
+
     print("Writing final feature-enriched dataset...")
     os.makedirs(args.out, exist_ok=True)
     
-    # Save the final dataset as a Parquet file
-    merged_df.to_parquet(os.path.join(args.out, "data.parquet"))
+    # Save the final dataset as a Parquet file (added index=False to keep it clean)
+    merged_df.to_parquet(os.path.join(args.out, "data.parquet"), index=False)
     
     print(f"Merge complete! Final shape: {merged_df.shape}")
 
