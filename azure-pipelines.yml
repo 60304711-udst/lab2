@@ -22,6 +22,9 @@ steps:
     scriptLocation: inlineScript
     inlineScript: |
       set -e
+      echo "Switching to the correct subscription"
+      az account set --subscription "UDST-CCIT-DSAI3202-1"
+      
       echo "Ensuring Azure ML CLI extension is installed"
       az extension add -n ml -y || az extension update -n ml
       
@@ -32,5 +35,4 @@ steps:
       JOB_NAME=$(az ml job create --file jobs/train_job.yml --query name -o tsv)
       
       echo "Job name: $JOB_NAME"
-      echo "Streaming job logs"
       az ml job stream --name $JOB_NAME
