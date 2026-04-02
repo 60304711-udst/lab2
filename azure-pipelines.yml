@@ -7,10 +7,8 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  # Your specific subscription
   AZURE_SUBSCRIPTION: 'SC-UDST-CCIT-DSAI3202'
-  # Update this to match your resource group!
-  RESOURCE_GROUP: '<YOUR_RESOURCE_GROUP_NAME>'
+  RESOURCE_GROUP: 'rg-60304711'
   WORKSPACE_NAME: 'Amazon-Electronics-Lab-60304711'
 
 steps:
