@@ -23,8 +23,9 @@ steps:
     scriptLocation: inlineScript
     inlineScript: |
       set -e
-      echo "Switching to the correct subscription"
-      az account set --subscription "UDST-CCIT-DSAI3202-1"
+      echo "Switching to the correct subscription using ID"
+      # Using the ID variable instead of the name
+      az account set --subscription $(SUBSCRIPTION_ID)
       
       echo "Ensuring Azure ML CLI extension is installed"
       az extension add -n ml -y || az extension update -n ml
