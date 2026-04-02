@@ -59,19 +59,22 @@ def build_features(df):
     # 1. Define columns that are metadata or labels (NOT features)
     ignore_cols = ['asin', 'reviewerID', 'reviewText', 'summary', 'reviewerName', 'reviewTime', 'unixReviewTime', 'overall', 'label']
     
-    # 2. Grab all standard numeric features (TF-IDF, sentiment, length)
+    # 2. Grab all standard numeric features
     feature_cols = [c for c in df.columns if c not in ignore_cols and c != 'sbert_vector']
     X_numeric = df[feature_cols].select_dtypes(include=[np.number]).values
 
-    # 3. Handle SBERT embeddings if they are stored as arrays in a single column
+    # 3. Handle SBERT embeddings
     if "sbert_vector" in df.columns:
         X_sbert = np.vstack(df['sbert_vector'].values)
-        X = np.hstack((X_numeric, X_sbert)) # Stick them together
+        X = np.hstack((X_numeric, X_sbert)) 
     else:
-        X = X_numeric # Fallback to just the numeric columns
+        X = X_numeric 
 
     if len(X) == 0:
         raise RuntimeError("Feature matrix is empty. Impressive.")
+        
+    # THE FIX: Convert any NaN or Infinity values to 0.0
+    X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
         
     return X
 
