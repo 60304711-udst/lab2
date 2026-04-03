@@ -1,0 +1,11 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: final-v4
+model: azureml:amazon-review-sentiment-model@latest
+code_configuration:
+  code: ../src
+  scoring_script: score.py
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
+  conda_file: ../env/conda.yml
+instance_type: Standard_DS3_v2
+instance_count: 1

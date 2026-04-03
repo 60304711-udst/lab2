@@ -1,0 +1,13 @@
+{
+  "data": [
+    {
+      "asin": "B00005LENO",
+      "reviewerID": "A1Mohammad",
+      "reviewText": "The sound quality is amazing and the bass is deep. Best headphones I have owned.",
+      "summary": "Incredible sound",
+      "unixReviewTime": 1648000000,
+      "verified": true,
+      "sbert_vector": [0.01, -0.02, 0.05]
+    }
+  ]
+}

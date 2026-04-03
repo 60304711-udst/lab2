@@ -4,6 +4,25 @@ type: sweep
 display_name: amazon_review_sweep
 experiment_name: amazon_review_training_experiment
 
+
+inputs:
+  train_data:
+    type: uri_folder
+    path: azureml:amazon_review_merged_features_train@latest
+  val_data:
+    type: uri_folder
+    path: azureml:amazon_review_merged_features_val@latest
+  test_data:
+    type: uri_folder
+    path: azureml:amazon_review_merged_features_test@latest
+
+# Outputs must also be at the root level
+outputs:
+  model_output:
+    type: uri_folder
+
+compute: azureml:cpu-cluster
+
 trial:
   code: ../src
   command: >
@@ -15,28 +34,9 @@ trial:
     --C ${{search_space.C}}
     --max_iter ${{search_space.max_iter}}
   environment:
-    # Uses the standard Microsoft base image and layers your conda.yml on top
     image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
     conda_file: ../env/conda.yml
   
-  inputs:
-    train_data:
-      type: uri_folder
-      default: azureml:amazon_review_merged_features_train@latest
-    val_data:
-      type: uri_folder
-      default: azureml:amazon_review_merged_features_val@latest
-    test_data:
-      type: uri_folder
-      default: azureml:amazon_review_merged_features_test@latest
-  
-  outputs:
-    model_output:
-      type: uri_folder
-
-
-compute: azureml:cpu-cluster
-
 sampling_algorithm: random
 
 search_space:
