@@ -7,8 +7,7 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  AZURE_SUBSCRIPTION: 'SC-UDST-CCIT-DSAI3202'
-  SUBSCRIPTION_ID: 'a485bb50-61aa-4b2f-bc7f-b6b53539b9d3'
+  AZURE_SUBSCRIPTION: '60304711-udst'
   RESOURCE_GROUP: 'rg-60304711'
   WORKSPACE_NAME: 'Amazon-Electronics-Lab-60304711'
 
@@ -23,9 +22,6 @@ steps:
     scriptLocation: inlineScript
     inlineScript: |
       set -e
-      
-      echo "Switching context to the correct student subscription..."
-      az account set --subscription $(SUBSCRIPTION_ID)
       
       echo "Ensuring Azure ML CLI extension is installed..."
       az extension add -n ml -y || az extension update -n ml
