@@ -18,6 +18,11 @@ def parse_args():
     parser.add_argument("--val_data", type=str, required=True)
     parser.add_argument("--test_data", type=str, required=True)
     parser.add_argument("--output", type=str, required=True)
+    
+    # --- SWEEP JOB HYPERPARAMETERS ---
+    parser.add_argument("--C", type=float, default=1.0)
+    parser.add_argument("--max_iter", type=int, default=100)
+    
     return parser.parse_args()
 
 # ---------------------------------------------------------
@@ -110,6 +115,10 @@ def evaluate(model, X, y, split):
 def main():
     args = parse_args()
     start_time = time.time()
+    
+    # --- LOG HYPERPARAMETERS TO MLFLOW ---
+    mlflow.log_param("C", args.C)
+    mlflow.log_param("max_iter", args.max_iter)
 
     print("Loading data... (this should not be the hard part)")
     train_df = load_data(args.train_data)
@@ -134,9 +143,9 @@ def main():
     if len(X_train) == 0:
         raise RuntimeError("Training data is empty. That's concerning.")
 
-    print("Training model...")
-    # OPTIMIZATION: max_iter=1000 stops timeout warnings. n_jobs=-1 uses all CPU cores for max speed!
-    model = LogisticRegression(max_iter=1000, n_jobs=-1)
+    print(f"Training model with C={args.C} and max_iter={args.max_iter}...")
+    # PASS THE DYNAMIC ARGUMENTS TO THE MODEL
+    model = LogisticRegression(C=args.C, max_iter=args.max_iter, n_jobs=-1, random_state=42)
     model.fit(X_train, y_train)
 
     print("Evaluating...")
