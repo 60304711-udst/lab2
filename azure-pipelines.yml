@@ -7,8 +7,8 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-
-  AZURE_SUBSCRIPTION: 'SC-UDST-CCIT-DSAI3202' 
+  AZURE_SUBSCRIPTION: 'SC-UDST-CCIT-DSAI3202'
+  SUBSCRIPTION_ID: 'a485bb50-61aa-4b2f-bc7f-b6b53539b9d3'
   RESOURCE_GROUP: 'rg-60304711'
   WORKSPACE_NAME: 'Amazon-Electronics-Lab-60304711'
 
@@ -24,14 +24,18 @@ steps:
     inlineScript: |
       set -e
       
-      echo "Ensuring Azure ML CLI extension is installed"
+      echo "Switching context to the correct student subscription..."
+      az account set --subscription $(SUBSCRIPTION_ID)
+      
+      echo "Ensuring Azure ML CLI extension is installed..."
       az extension add -n ml -y || az extension update -n ml
       
-      echo "Setting Azure ML defaults"
+      echo "Setting Azure ML defaults..."
       az configure --defaults group=$(RESOURCE_GROUP) workspace=$(WORKSPACE_NAME)
       
-      echo "Submitting Azure ML job"
+      echo "Submitting Azure ML job..."
       JOB_NAME=$(az ml job create --file jobs/train_job.yml --query name -o tsv)
       
       echo "Job name: $JOB_NAME"
+      echo "Streaming logs..."
       az ml job stream --name $JOB_NAME
